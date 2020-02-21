@@ -1,0 +1,14 @@
+{
+  "mysql" : {
+    "host":"127.0.0.1" ,
+    "port" :"3306" ,
+    "user":"root" ,
+    "password" : "",
+    "database" : "play"
+  } ,
+  "cartes" :[
+    {"type":"1","nom":"guest","prix" :"3500" , "nombre":"50","color":"blue"},
+    {"type":"2","nom":"eco","prix" :"9750" , "nombre":"150","color":"orange"},
+    {"type":"3","nom":"darna","prix" :"30000" , "nombre":"500","color":"green"}
+  ]
+}

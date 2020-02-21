@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/font-awesome.min.css">
+
+    <style media="screen">
+    body {background: #37474f;}
+.sideBar {
+  position:fixed;left:0;top:0;bottom:0;
+  width:280px;border-right:1px solid rgba(0,0,0,0.15);
+background: #263238;
+}
+.sideBar .inner {
+  padding : 10px;
+}
+
+.sideBar ul {
+  list-style: none;margin:0;padding: 0;
+  cursor: pointer;
+}
+.sideBar ul li {
+  float: left;display: block;width:100%;padding:5px;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+
+}
+
+.main {padding:15px 15px 0 290px ; }
+
+.main .div {
+display: none;
+}
+
+.main .div.show{
+display: block;
+}
+
+.card {margin-bottom: 15px}
+
+
+
+    </style>
+    <title></title>
+  </head>
+  <body class="text-white">
+
+
+<div class="sideBar">
+<ul>
+  <li onclick="tab(0)">Générale</li>
+  <li onclick="tab(1)">Caisse</li>
+  <li onclick="tab(2)">Exporter</li>
+  <li onclick="tab(3)">Reset</li>
+</ul>
+</div>
+
+<div class="main">
+<div class="container w-50">
+
+<div class="div show">
+  <div class="card text-dark">
+  <div class="card-header">
+  Informations
+  </div>
+  <div class="card-body  " align="center">
+<table class="table ">
+
+<tr>
+  <td>Nom</td>
+  <td><input type="text" class="form-control" nom></td>
+</tr>
+</table>
+
+  </div>
+  <div class="card-footer">
+  <button type="button" class="btn btn-outline-dark float-right" name="button" onclick="sauvegarder('nom')">Sauvegarder</button>
+  </div>
+</div>
+
+
+
+<div class="card text-dark">
+<div class="card-header">
+Nombre des postes
+</div>
+<div class="card-body  " align="center">
+<input type="number" min="1" max="100" class="form-control  w-50  " name="" value="" nombredestables>
+</div>
+<div class="card-footer">
+<button type="button" class="btn btn-outline-dark float-right" name="button"  onclick="sauvegarder('nombredestables')">Sauvegarder</button>
+</div>
+</div>
+
+
+</div>
+
+<div class="div ">
+<div class="card text-dark">
+<div class="card-header">
+Partie
+</div>
+<div class="card-body  " align="center">
+  <table width="100%">
+    <tr>
+      <td>Temps</td>
+      <td><input type="number"  class="form-control " name="" value="15" temps></td>
+    </tr>
+    <tr>
+      <td>Prix</td>
+      <td><input type="number"  class="form-control " name="" value="70" prix></td>
+    </tr>
+    <tr>
+      <td>Temps_max</td>
+      <td><input type="number"  class="form-control " name="" value="70" temps_max ></td>
+    </tr>
+  </table>
+
+</div>
+<div class="card-footer">
+<button type="button" class="btn btn-outline-dark float-right" name="button"   onclick="sauvegarder('temps-prix-temps_max')">Sauvegarder</button>
+</div>
+</div>
+
+
+
+</div>
+
+
+<div class="div">
+<!-- <div class="card">
+  <div class="card-header text-dark">Archiver</div>
+  <div class="card-body text-center">
+    <button type="button" class= "btn btn-warning " name="button">Exporter</button>
+
+    </div>
+</div> -->
+<div class="card">
+  <div class="card-header text-dark">Exporter la liste des Clients  </div>
+  <div class="card-body text-center">
+    <button type="button" class= "btn btn-primary " onclick="exportdialog()" name="button">Exporter  </button>
+    </div>
+</div>
+
+</div>
+
+
+<div class="div">
+  <div class="card text-dark">
+  <div class="card-header">
+  Rénitialiser
+  </div>
+  <div class="card-body  " >
+    <div class="form-check">
+   <input class="form-check-input" type="checkbox" value="" id="rc">
+   <label class="form-check-label" for="rc">
+     Reinitialiser les Clients
+   </label>
+ </div>
+  <input id = 'mdp' type="text" class="form-control" placeholder="tapez votre mot de passe " aria-label="Username" aria-describedby="addon-wrapping">
+  </div>
+  <div class="card-footer">
+  <button type="button" class="btn btn-outline-dark float-right" name="button" onclick="reset()">Confirmer</button>
+  </div>
+  </div>
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+  </body>
+<script type="text/javascript" src="play.js"></script>
+<script type="text/javascript" src="assets/parametres.js">
+</script>
+<script type="text/javascript">
+const { dialog , app } = require('electron').remote
+
+
+
+
+
+
+var xl = require('excel4node');
+
+
+function exportdialog() {
+
+
+  dialog.showSaveDialog( {
+    filters :[{name:"xlsx" ,extensions: ['xlsx'] }]
+  }).then(result => {
+    if(result.canceled) return ;
+  exportClients(result.filePath)
+  }).catch(err => {
+    console.log(err)
+  })
+
+
+}
+
+
+function exportClients(path){
+
+  var wb = new xl.Workbook();
+// Add Worksheets to the workbook
+var ws = wb.addWorksheet('Sheet 1');
+// Set value of cell A1 to 100 as a number type styled with paramaters of style
+let nom , tel , credit , date , type_carte,x = 2;
+get("SELECT *,DATE_FORMAT(date,'%d/%m/%Y') AS date2 FROM client ",function functionName(result) {
+  console.log(result);
+  ws.cell(1, 1).string('nom');
+  ws.cell(1, 2).string('telephone');
+  ws.cell(1, 3).string('credit');
+  ws.cell(1, 4).string('typecarte');
+  ws.cell(1, 5).string('Date');
+
+
+result.forEach(function(row){
+  ws.cell(x, 1).string(row.nom.toString() );
+  ws.cell(x, 2).string(row.tel.toString());
+  ws.cell(x, 3).string(row.credit.toString());
+  ws.cell(x, 4).string(row.type_carte.toString());
+  ws.cell(x, 5).string(row.date2.toString());
+  x++;
+});
+wb.write(path);
+
+})
+
+
+
+}
+
+
+
+
+
+
+</script>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="assets/css/photon.min.css">
+    <style media="screen">
+      td[tc] {text-align: center}
+      td[tr] {text-align: right}
+      .wincontrol {display: inline;float:right;width:80px}
+      .wincontrol span {margin-right:10px;width:50px;height:50px}
+    </style>
+    <title>Recette</title>
+    <style>
+    </style>
+
+</head>
+<body>
+  <div class="window">
+  <header class="toolbar toolbar-header">
+    <div class="wincontrol" >
+      <span class="icon icon-record " onclick="maximize()" style="color:#34c84a"></span>
+      <span class="icon icon-record "  onclick="minimize()" style="color:#57acf5"></span>
+      <span class="icon icon-record "  onclick="closewin()"  style="color:#fdbc40"></span>
+    </div>
+
+    <h1 class="title" >Recette <span date></span></h1>
+
+<div class="toolbar-actions">
+<div class="btn-group">
+<button class="btn btn-default btn-lg">
+  <span class="icon icon-ccw" onclick="window.location.reload()"></span>
+</button>
+<button class="btn btn-default btn-lg" onclick="require('electron').remote.getCurrentWindow().close()">
+Fermer
+</button>
+
+</div>
+
+
+
+</div>
+
+  </header>
+
+<div class="window-content">
+  <div class="pane-group">
+<div class="pane-sm sidebar text-center" style="width:300px" >
+  total
+<h1 id="total"> </h1>
+
+<ul class="list-group">
+  <li class="list-group-item" onclick="setRange(0)"><h4>Aujourd'hui</h4></li>
+  <li class="list-group-item"  onclick="setRange(1)"><h4>Hier</h4></li>
+  <li class="list-group-item" onclick="setRange(2)"><h4>Cette semaine</h4></li>
+  <li class="list-group-item" onclick="setRange(3)"><h4>Ce mois-si</h4></li>
+  <li class="list-group-item" onclick="setRange(4)"><h4>Mois dernier</h4></li>
+
+ <li class="list-group-header">
+   <input type="date" onchange="afficherRecette()" id="date1" class="form-control  " name="" value="">
+ </li>
+
+ <li class="list-group-header">
+   <input type="date" onchange="afficherRecette()" id="date2" class="form-control  " name="" value="">
+ </li>
+ <li class="list-group-header">
+<select  onchange="afficherRecette()" class="form-control" name="filterap">
+<option value="0">tous</option>
+<option value="1">abonnements</option>
+<option value="2">paiements</option>
+</select>
+
+ </li>
+ </ul>
+
+
+
+</div>
+
+
+<div class="pane">
+  <div class="pane">
+
+<table class="table-striped">
+<thead>
+<tr>
+  <th>N°</th>
+  <th>DEBUT</th>
+  <th>FIN</th>
+  <th>TEMPS</th>
+  <th>MONTANT</th>
+
+</tr>
+</thead>
+<tbody id="t1">
+
+</tbody>
+</table>
+
+
+  </div>
+</div>
+
+  <div class="pane">
+
+<table class="table-striped">
+<thead>
+<tr>
+  <th>N°</th>
+  <th>NOM</th>
+  <th>TEL</th>
+  <th>PRIX</th>
+  <th>PRIX</th>
+</tr>
+</thead>
+<tbody id="t2">
+
+</tbody>
+</table>
+
+
+  </div>
+</div>
+</div>
+
+
+
+        <footer class="toolbar toolbar-footer">
+          <h1 class="title recette" id="total2"> </h1>
+        </footer>
+      </div>
+      </div>
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="play.js"></script>
+<script type="text/javascript">
+const moment = require('moment') ,
+date1 = document.querySelector('#date1'),
+date2 = document.querySelector('#date2');
+moment.locale('Fr');
+date1.value = moment().format('YYYY-MM-DD');
+date2.value = moment().format('YYYY-MM-DD');
+
+
+const ranges = [
+      [moment().format('YYYY-MM-DD'),moment().format('YYYY-MM-DD')] ,
+[moment().subtract('1','days').format('YYYY-MM-DD'),moment().subtract('1','days').format('YYYY-MM-DD')],
+[moment().subtract('6','days').format('YYYY-MM-DD'),moment().format('YYYY-MM-DD')],
+[moment().startOf('month').format('YYYY-MM-DD'),moment().format('YYYY-MM-DD')],
+[moment().subtract('1','months').startOf('month').format('YYYY-MM-DD'),moment().startOf('month').format('YYYY-MM-DD')],
+[moment().startOf('year').format('YYYY-MM-DD'),moment().add('1','day').format('YYYY-MM-DD')]
+], setRange = function(index){
+date1.value = ranges[index][0];
+date2.value = ranges[index][1];
+afficherRecette();
+}
+
+function afficherRecette(){
+  let d1 = date1.value , d2 = date2.value , total_recette = 0 , tbl1 = '', tbl2= '' , debut,fin ,temps , filterap = document.querySelector('[name="filterap"]').value;
+document.querySelector('[date]').innerHTML = 'de '+moment(d1).format('dddd DD MMMM YYYY');
+if (d1 !== d2)document.querySelector('[date]').innerHTML += 'jusq\'a '+moment(d2).format('dddd DD MMMM YYYY');
+   get("SELECT * FROM poste WHERE date_fin BETWEEN '"+d1+"' AND '"+d2+" 23:59:59'" ,function(data,error){
+ if (data && data.length) {
+   for (var i = 0; i < data.length; i++) {
+     debut = moment(data[i].date_debut) ;
+      fin = moment(data[i].date_fin) ;
+     temps = fin.diff(debut, 'minutes')
+  if (filterap == '0' || filterap == '2' )   total_recette += parseInt(data[i].montant);
+tbl1 += '<tr><td>'+(i+1)+'</td><td>'+debut.format('DD/MM HH:mm')+'</td><td>'+fin.format('DD/MM HH:mm')+'</td><td tc>'+temps+'</td><td tr>'+data[i].montant+'</td></tr>';
+   }
+ }
+
+get("SELECT * FROM client WHERE date BETWEEN '"+d1+"' AND '"+d2+" 23:59:59'" , function(dd){
+  if (dd && dd.length) {
+    for (var i = 0; i < dd.length; i++) {
+      debut = moment(dd[i].date) ;
+
+   if (filterap == '0' || filterap == '1' )   total_recette += parseInt(dd[i].prix);
+ tbl2 += '<tr><td>'+(i+1)+'</td><td>'+dd[i].nom+'</td><td tc>'+dd[i].tel+'</td><td tr>'+dd[i].prix+'</td></tr>';
+    }
+}
+
+
+
+ document.getElementById('t1').innerHTML =  tbl1;
+ document.getElementById('t2').innerHTML = tbl2;
+ document.getElementById('total').innerHTML = total_recette;
+ document.getElementById('total2').innerHTML = total_recette;
+})
+
+   })
+}
+afficherRecette();
+
+
+</script>
+</body>
+</html>

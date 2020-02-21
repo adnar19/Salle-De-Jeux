@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <title></title>
+
+    <style media="screen">
+      .poste {height:150px;border:1px solid rgba(255,255,255,0.2);position: relative;margin-bottom:10px;line-height: 150px;padding:0;color:rgba(255,255,255,0.4);text-align: center;font-size: 20px}
+      .poste.occupe { background-color: green;}
+
+      .poste span.np {position: absolute;left:5px;top:5px;line-height: 20px;font-size: 18px}
+      .poste span.temp {position: absolute;left:5px;bottom:5px;line-height: 20px;font-size: 18px}
+
+    </style>
+  </head>
+  <body class="bg-dark text-white">
+
+<div class="container-fluid row postes">
+
+
+</div>
+
+
+
+
+<script type="text/javascript" src= "mysql.js"></script>
+
+<script>
+const moment = require('moment');
+var npostes  ;
+
+
+
+get("SELECT * FROM parametres WHERE cle='nombredestables'" ,function(res){
+  console.log(npostes);
+ npostes = res[0].valeur;
+ init();
+})
+
+
+
+ var  init = function(){
+   let postesHtml = '';
+for (var i = 1; i <= npostes; i++) {
+ postesHtml +=  "<div class= 'col-3'><div ondblclick='activer_post("+i+")' class='poste poste-"+i+"'><span class='np'></span><span class='temp'></span>"+i+"</div></div>" ;
+ // postesHtml +=  '<div class="col-3"><div class="poste poste-'++'">"+i+"</div></div>' ;
+}
+document.querySelector('.postes').innerHTML = postesHtml;
+  actualiser();
+ }
+
+
+function actualiser() {
+  let now = moment() ,debut ,temp ;
+  get("SELECT * FROM poste WHERE date_fin ='' " ,function(res){
+
+res.forEach(function(enr){
+  debut = moment(enr.date_debut);
+  temp = now.diff(debut , 'minutes');
+  let pst = document.querySelector('.poste-'+enr.num_poste);
+ pst.classList.add('occupe');
+  pst.setAttribute('data-id',enr.id);
+  pst.children[0].innerText = enr.nb_partie;
+  pst.children[1].innerText = (20 - temp) + "'";
+  // enr.num_poste
+  // enr.date_debut
+})
+
+  })
+
+
+}
+
+
+
+function activer_post(nposte){
+  let postediv = document.querySelector('.poste-'+nposte) , dataid = postediv.dataset.id;
+console.log(dataid);
+if (dataid) {nv_partie(dataid);
+             return;}
+let data = {num_poste:nposte,id_client:'0'}
+ insert('INSERT INTO poste SET ?',data,function(r){
+  console.log(r);
+  actualiser()
+})
+}
+
+function nv_partie(id) {
+  get("UPDATE poste SET date_debut=NOW(),nb_partie=nb_partie+1 where id='"+id+"'",function(res){
+    console.log(res);
+    actualiser()
+  })
+}
+
+
+
+function connectDb(){
+  testConnexion(
+    function(){document.querySelector('.resultat').innerHTML = '<span class="text-success">connecté</span>'},
+    function(){document.querySelector('.resultat').innerHTML = '<span class="text-danger">erreur</span>'})
+}
+
+
+
+
+  </script>
+</body>
+</html>

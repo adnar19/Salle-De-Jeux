@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/font-awesome.min.css">
+
+    <title></title>
+
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+  </head>
+  <body class="bg-dark text-white">
+
+
+<div id='actions' class="fermer">
+  <h2><span id="npo">POSTE </span><span  id='prix'>00.00</span></h2>
+  <button class="btn btn-danger btn-lg float-right" onclick="anuuler()"><i class="fa fa-times"></i> annuler</button>
+  <button class="btn btn-success btn-lg float-right" onclick="valider()"><i class="fa fa-check"></i> valider</button>
+  <button class="btn btn-primary btn-lg float-right"  onclick="cardField()"><i class="fa fa-credit-card"></i> carte</button>
+  <button class="btn btn-warning btn-lg float-right" onclick="nv_partie()"><i class="fa fa-plus"></i> Nouvelle partie</button>
+   </div>
+
+   <div id='creditCard' class="fermer">
+<input type="text" class="form-control form-control-lg qcard" name="search" value="">
+
+<button type="button" class="btn btn-lg pull-right text-white" name="button" onclick="cardField(true)"><i class="fa fa-times"></i></button>
+
+<div style="padding-top:50px">
+
+<div class="container">
+<div class="row">
+ <div class="col-8">
+<h1 class="text-white" nom_client></h1>
+<h2 class="text-primary" tel_client></h2>
+<h3 class="text-warning" carte_client></h3>
+
+</div>
+<div class="col-4">
+  <h1 class="text-white text-center"   ancien_solde_client> </h1>
+  <h1 class="text-white text-center"   nouv_solde_client> </h1>
+  <button class="btn btn-success btn-block btn-lg  valider_carte " onclick="" style=""><i class="fa fa-check"></i> valider</button>
+</div>
+</div>
+
+</div>
+</div>
+    </div>
+
+
+
+<div class="container-fluid row postes">
+
+
+</div>
+
+
+
+
+
+
+
+
+<script type="text/javascript" src= "play.js"></script>
+<script type="text/javascript" src= "frequency.js"></script>
+<script type="text/javascript" src= "../node_modules/ramjet/dist/ramjet.umd.js"></script>
+
+<script>
+const moment = require('moment');
+var remote_act = false , remote_id = '' , remote_pass = '';
+
+
+// function remote_inf(){
+//   let data = {},ddt;
+//   data.infos = {COMPUTERNAME:'PLAY',username:'fares',password:'test'};
+//   data.ventes = {};
+// get("SELECT DATE_FORMAT(date_fin,'%Y%m%d')  AS dt,SUM(montant) AS smnt FROM poste WHERE date_fin <> '' GROUP BY DATE_FORMAT(date_fin,'%Y%m%d') ",function(res){
+//   res.forEach(function(x){
+//     ddt = x.dt;
+//     // data.ventes.push ({""+ddt+"" :{val:x.smnt,bval:x.smnt}});
+// data.ventes[ddt] = {val:x.smnt,bval:x.smnt};
+//   })
+//   var dataj = JSON.stringify(data);
+// frequency.post('http://frequency-dz.com/api/play/1.0/w.php','DATA='+dataj,function(l){console.log(l);})
+// })
+// }
+
+
+
+
+
+
+ var npostes  , prix = 70 , temps= 20,poste_act , temp_max=5 , bootText = 'FREQUENCY' , q = document.querySelector('.qcard'),
+ clName = document.querySelector('[nom_client]'),
+ clPhone = document.querySelector('[tel_client]'),
+ clCard = document.querySelector('[carte_client]'),
+ clOld = document.querySelector('[ancien_solde_client]'),
+ clNew = document.querySelector('[nouv_solde_client]') ,
+ cardBtn = document.querySelector('.valider_carte')   ;
+
+q.addEventListener('keypress',function(z){
+  if(z.keyCode == 13 && q.value !== '') {
+  let  tva = document.querySelector('.poste-'+poste_act),
+  nbrp =  tva.children[0].innerText ;
+
+    let nk = maj(q.value);
+
+if ( isNaN(q.value )) {
+  q.value  =  nk;
+}
+console.log('searching');
+get("SELECT * FROM client WHERE carte LIKE '"+nk+"'" , function(r){
+  // if (r[0]) console.log(r[0]);
+if (r.length > 0) {
+
+let client = r[0] ,credit = parseInt(client.credit);
+ credit -= nbrp;
+ clName.innerText = client.nom.toUpperCase();
+ clPhone.innerText = client.tel;
+ clCard.innerText = client.carte;
+ clOld.innerText = client.credit;
+ clNew.innerText = credit;
+ if (credit > 0) {
+   let client_id = client.id ,
+   idposte = tva.dataset.id;
+
+   console.log(client_id,idposte);
+   cardBtn.style.display='block';
+   cardBtn.setAttribute('onclick','valider_carte('+client_id+','+credit+')');
+   console.log('credit ' + credit);
+
+ }
+} else {
+  q.value = '';
+  audio.error();
+}
+
+
+})
+
+
+}
+
+})
+
+
+
+
+function cardField(close){
+  if (close){
+    document.getElementById("actions").classList.remove('fermer');
+    document.getElementById("creditCard").classList.add('fermer');
+  } else {
+
+    q.focus();
+    q.value = "";
+    cardBtn.style.display = "none";
+    clName.innerHTML = "";
+    clPhone.innerHTML = "";
+    clCard.innerHTML = "";
+    clOld.innerHTML = "";
+    clNew.innerHTML = "";
+    document.getElementById("actions").classList.add('fermer');
+    document.getElementById("creditCard").classList.remove('fermer');
+
+  }
+}
+function valider_carte(idc,credit){
+  if (poste_act == undefined ) return;
+let  tv = document.querySelector('.poste-'+poste_act) ,
+idp = tv.dataset.id ,
+np = tv.children[0].innerText , id = tv.dataset.id;
+
+  get("UPDATE client SET credit= '"+credit+"' WHERE id='"+idc+"'" ,function(r){
+    get("UPDATE poste SET date_fin=NOW(), type='1',id_client='"+idc+"',montant='0' WHERE id='"+idp+"'",function(x){  })
+cardBtn.style.display = "none";
+tv.classList.remove('occupe') ;
+tv.removeAttribute('data-id') ;
+tv.setAttribute('onclick','activer_post('+poste_act+')') ;
+tv.children[0].innerText = '';
+tv.children[1].innerText = '';
+tv.children[2].children[0].style.width = '0%';
+cardBtn.removeAttribute('onclick');
+actualiser();
+audio.success();
+cardField(true);
+  });
+}
+
+
+
+get("SELECT * FROM parametres ORDER BY id ASC" ,function(res){
+  console.log(npostes);
+ npostes = res[0].valeur;
+ prix  = parseFloat(res[1].valeur);
+ temps  = res[2].valeur;
+ bootText  = res[3].valeur;
+
+ init();
+})
+
+
+
+ var  init = function(){
+   let postesHtml = '';
+for (var i = 1; i <= npostes; i++) {
+ postesHtml +=  "<div class= 'col-3'><div   ondblclick='activer_post("+i+")' class='poste poste-"+i+"'><span class='np'></span><span class='temp'></span>"+i+" <div class='progress' style='height: 1px;'><div class='progress-bar bg-warning' role='progressbar' style='width: 0%;' aria-valuenow='25' aria-valuemin='0' aria-valuemax='100'></div></div><span class='indicator'></span></div></div>" ;
+ }
+document.querySelector('.postes').innerHTML = postesHtml;
+  actualiser();
+  setInterval(actualiser,30000);
+ }
+
+
+function actualiser() {
+  console.log('refresh');
+  let now = moment() ,debut ,temp ,temp_porcentage ;
+  get("SELECT * FROM poste WHERE date_fin ='' " ,function(res){
+
+res.forEach(function(enr){
+  debut = moment(enr.date_debut);
+  temp = now.diff(debut , 'minutes');
+  let pst = document.querySelector('.poste-'+enr.num_poste);
+ pst.classList.add('occupe');
+ temp_porcentage = Math.round((temp / temps) * 100);
+
+   pst.setAttribute('data-id',enr.id);
+   pst.setAttribute('onclick','toggleActionsBar("'+enr.num_poste+'")');
+   pst.removeAttribute('ondblclick');
+
+  pst.children[0].innerText = enr.nb_partie;
+  pst.children[1].innerText = (temps - temp) + "'";
+  pst.children[2].children[0].style.width = temp_porcentage+'%';
+  // enr.num_poste
+  // enr.date_debut
+})
+
+if (poste_act !== undefined){
+  let  tv = document.querySelector('.poste-'+poste_act) ,
+  nbrp = (tv.children[0].innerText == ''?0:tv.children[0].innerText),
+  montant=parseFloat(nbrp)*prix;
+  document.getElementById('prix').innerHTML=montant;
+}
+  })
+
+}
+
+toggleActionsBar = function(np){
+
+
+document.getElementById('npo').innerText = 'POSTE '+np;
+
+
+let tv = document.querySelector('.poste-'+np),
+ nb_partie= tv.children[0].innerText;
+if (poste_act == np) {
+  document.getElementById('actions').classList.toggle('fermer');
+} else {
+
+  document.getElementById('actions').classList.remove('fermer');
+}
+poste_act=np;
+  actualiser()
+}
+
+
+
+function nv_partie() {
+  if (poste_act == undefined ) return;
+let  tv = document.querySelector('.poste-'+poste_act) ,
+id = tv.dataset.id;
+
+  get("UPDATE poste SET date_debut=NOW(),nb_partie=nb_partie+1 where id='"+id+"'",function(res){
+
+    window.setTimeout(actualiser,500);
+
+  })
+}
+
+function valider(){
+  if (poste_act == undefined ) return;
+let  tv = document.querySelector('.poste-'+poste_act) ,
+np = tv.children[0].innerText , id = tv.dataset.id,
+montant = prix * parseFloat(np);
+get("UPDATE poste SET date_fin=NOW(),nb_partie= '"+np+"',montant = '"+montant+"' where id='"+id+"'",function(res){
+  tv.classList.remove('occupe') ;
+  tv.removeAttribute('data-id') ;
+  tv.setAttribute('onclick','activer_post('+poste_act+')') ;
+  tv.children[0].innerText = '';
+  tv.children[1].innerText = '';
+  tv.children[2].children[0].style.width = '0%';
+  actualiser();
+
+ toggleActionsBar(poste_act);
+audio.success()
+})
+}
+
+
+function anuuler() {
+  if (poste_act == undefined ) return;
+let  tv = document.querySelector('.poste-'+poste_act) ,
+np = tv.children[0].innerText , id = tv.dataset.id,
+montant = prix * parseFloat(np) ,npa ,tmp;
+get("SELECT * FROM poste WHERE id='"+id+"'",function (res) {
+npa = parseInt(res[0].nb_partie);
+tmp = moment().diff(moment(res[0].date_debut) , 'minutes');
+
+if (tmp < temp_max) {
+if (npa == '1') {
+get("DELETE FROM poste WHERE id='"+id+"'",function(){
+  tv.classList.remove('occupe') ;
+  tv.removeAttribute('data-id') ;
+  tv.setAttribute('onclick','activer_post('+poste_act+')') ;
+  tv.children[0].innerText = '';
+  tv.children[1].innerText = '';
+  actualiser();
+  toggleActionsBar(poste_act);
+})
+
+} else {
+npa--;
+ let debut = moment().subtract(temps, 'minutes').format("YYYY-MM-DD HH:mm:ii");
+get("UPDATE poste SET nb_partie='"+npa+"' , date_debut='"+debut+"'   WHERE id='"+id+"'",function(){
+  actualiser();
+});
+
+
+}
+
+}
+
+
+
+})
+
+
+}
+
+
+
+function activer_post(nposte){
+  let postediv = document.querySelector('.poste-'+nposte) , dataid = postediv.dataset.id;
+  postediv.classList.add('demarage');
+  postediv.innerHTML = postediv.innerHTML.replace('</span>'+nposte,'</span>'+bootText);
+
+console.log(dataid);
+if (dataid) {nv_partie(dataid);
+             return;}
+let data = {num_poste:nposte,id_client:'0'}
+ insert('INSERT INTO poste SET ?',data,function(r){
+  console.log(r);
+  actualiser();
+window.setTimeout(function(){
+  postediv.classList.remove('demarage');
+  postediv.innerHTML = postediv.innerHTML.replace('</span>'+bootText,'</span>'+nposte);
+},2000)
+
+})
+}
+
+
+
+
+function connectDb(){
+  testConnexion(
+    function(){document.querySelector('.resultat').innerHTML = '<span class="text-success">connecté</span>'},
+    function(){document.querySelector('.resultat').innerHTML = '<span class="text-danger">erreur</span>'})
+}
+
+
+
+
+
+
+
+  </script>
+</body>
+</html>

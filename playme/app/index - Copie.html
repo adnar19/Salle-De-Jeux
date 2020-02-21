@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <title></title>
+
+    <style media="screen">
+    .postes {margin-top:50px}
+      .poste {height:150px;border:1px solid rgba(255,255,255,0.2);position: relative;margin-bottom:10px;line-height: 150px;padding:0;color:rgba(255,255,255,0.4);text-align: center;font-size: 20px}
+      .poste.occupe { background-color: #76ff03;color:#111}
+
+      .poste span.np {position: absolute;left:5px;top:5px;line-height: 20px;font-size: 18px}
+      .poste span.temp {position: absolute;left:5px;bottom:5px;line-height: 28px;font-size: 22px}
+
+      .dialog {position: fixed;top:0;left:0;width:100vw;height:100vh;padding:25vh 25vw;}
+      .dialog.bgb {background: rgba(0,0,0,0.9)}
+      .dialog.hid {opacity: 0;pointer-events: none;}
+      .dialog .inner{background: #ccff90;height:50vh;width:50vw;box-shadow: 0px 10px #b2ff59;
+        padding:10px;
+        -webkit-box-shadow: 0px 0px 49px 0px #b2ff59;
+        -moz-box-shadow: 0px 0px 49px 0px #b2ff59;
+        box-shadow: 0px 0px 49px 0px #b2ff59;
+      }
+
+
+.dialog , .dialog.hid {transition: background 0.4s ease;}
+    </style>
+  </head>
+  <body class="bg-dark text-white">
+
+<div class="container-fluid row postes">
+
+
+</div>
+
+
+
+<div class="dialog hid">
+<div class="inner">
+
+<button type="button" class="btn btn-danger" name="button"  onclick="transform.close()">Fermer</button>
+<button type="button" class="btn btn-block btn-primary" onclick="nv_partie(current_id)" name="button">Nouvelle partie</button>
+</div>
+</div>
+
+
+
+
+<script type="text/javascript" src= "mysql.js"></script>
+<script type="text/javascript" src= "../node_modules/ramjet/dist/ramjet.umd.js"></script>
+
+<script>
+const moment = require('moment');
+ var npostes  ;
+
+
+
+var current_id ,working = false;
+var transform = {
+  a : null,
+  b : document.querySelector('.dialog'),
+  run :function(){
+    if (working) return;
+    working = true;
+    current_id = transform.a.dataset.id;
+ramjet.transform(transform.a , transform.b ,{done:function(){working = false;transform.b.classList.remove('hid');transform.b.classList.add('bgb');}});
+} ,
+close :function(){
+  ramjet.transform(transform.b , transform.a,{done:function(){transform.b.classList.add('hid');transform.b.classList.remove('bgb');}});
+  transform.b.classList.add('hid');
+ }
+}
+
+
+
+
+
+
+
+get("SELECT * FROM parametres WHERE cle='nombredestables'" ,function(res){
+  console.log(npostes);
+ npostes = res[0].valeur;
+ init();
+})
+
+
+
+ var  init = function(){
+   let postesHtml = '';
+for (var i = 1; i <= npostes; i++) {
+ postesHtml +=  "<div class= 'col-3'><div   ondblclick='activer_post("+i+")' class='poste poste-"+i+"'><span class='np'></span><span class='temp'></span>"+i+"</div></div>" ;
+ }
+document.querySelector('.postes').innerHTML = postesHtml;
+  actualiser();
+  setInterval(actualiser,30000)
+ }
+
+
+function actualiser() {
+  console.log('refresh');
+  let now = moment() ,debut ,temp ;
+  get("SELECT * FROM poste WHERE date_fin ='' " ,function(res){
+
+res.forEach(function(enr){
+  debut = moment(enr.date_debut);
+  temp = now.diff(debut , 'minutes');
+  let pst = document.querySelector('.poste-'+enr.num_poste);
+ pst.classList.add('occupe');
+ pst.setAttribute('onclick','transform.a = this;transform.run()');
+ pst.removeAttribute('ondblclick' );
+   pst.setAttribute('data-id',enr.id);
+  pst.children[0].innerText = enr.nb_partie;
+  pst.children[1].innerText = (20 - temp) + "'";
+  // enr.num_poste
+  // enr.date_debut
+})
+
+  })
+
+
+}
+
+
+
+
+
+
+function activer_post(nposte){
+  let postediv = document.querySelector('.poste-'+nposte) , dataid = postediv.dataset.id;
+console.log(dataid);
+if (dataid) {nv_partie(dataid);
+             return;}
+let data = {num_poste:nposte,id_client:'0'}
+ insert('INSERT INTO poste SET ?',data,function(r){
+  console.log(r);
+  actualiser()
+})
+}
+
+function nv_partie(id) {
+
+  get("UPDATE poste SET date_debut=NOW(),nb_partie=nb_partie+1 where id='"+id+"'",function(res){
+    console.log(res);
+    actualiser();
+    window.setTimeout(function(){transform.close();},1000)
+  })
+}
+
+
+
+function connectDb(){
+  testConnexion(
+    function(){document.querySelector('.resultat').innerHTML = '<span class="text-success">connecté</span>'},
+    function(){document.querySelector('.resultat').innerHTML = '<span class="text-danger">erreur</span>'})
+}
+
+
+
+
+
+
+
+  </script>
+</body>
+</html>
